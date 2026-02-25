@@ -1,0 +1,54 @@
+import UIKit
+import React
+import React_RCTAppDelegate
+import ReactAppDependencyProvider
+
+@main
+class AppDelegate: UIResponder, UIApplicationDelegate {
+  var window: UIWindow?
+
+  var reactNativeDelegate: ReactNativeDelegate?
+  var reactNativeFactory: RCTReactNativeFactory?
+
+  func application(
+    _ application: UIApplication,
+    didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
+  ) -> Bool {
+    let delegate = ReactNativeDelegate()
+    delegate.dependencyProvider = RCTAppDependencyProvider()
+    let factory = RCTReactNativeFactory(delegate: delegate)
+
+    reactNativeDelegate = delegate
+    reactNativeFactory = factory
+
+    window = UIWindow(frame: UIScreen.main.bounds)
+
+    factory.startReactNative(
+      withModuleName: "RNHotUpdateDemo",
+      in: window,
+      launchOptions: launchOptions
+    )
+
+    return true
+  }
+}
+
+class ReactNativeDelegate: RCTDefaultReactNativeFactoryDelegate {
+  override func bundleURL() -> URL? {
+#if DEBUG
+    let provider = RCTBundleURLProvider.sharedSettings()
+    if let port = ProcessInfo.processInfo.environment["RCT_METRO_PORT"], !port.isEmpty {
+      provider.jsLocation = "localhost:\(port)"
+    } else {
+      if RCTBundleURLProvider.isPackagerRunning("localhost:8081") {
+        provider.jsLocation = "localhost:8081"
+      } else if RCTBundleURLProvider.isPackagerRunning("localhost:8082") {
+        provider.jsLocation = "localhost:8082"
+      }
+    }
+    return provider.jsBundleURL(forBundleRoot: "index")
+#else
+    return RNUpdateManager.bundleURL()
+#endif
+  }
+}
